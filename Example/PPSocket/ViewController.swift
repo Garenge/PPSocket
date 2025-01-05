@@ -7,12 +7,21 @@
 //
 
 import UIKit
+import PPSocket
 
 class ViewController: UIViewController {
+    
+    let server = PPServerSocketManager()
+    let client = PPClientSocketManager()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
+        
+        self.server.accept(port: 12123)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            self.client.connect(host: "127.0.0.1", port: 12123)
+        }
     }
 
     override func didReceiveMemoryWarning() {

@@ -16,10 +16,26 @@ To run the example project, clone the repo, and run `pod install` from the Examp
 PPSocket is available through [CocoaPods](https://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
+*add source*
+
+```
+source 'https://github.com/Garenge/pengpengSpecs.git'
+source 'https://github.com/CocoaPods/Specs.git'
+```
+
 ```ruby
 pod 'PPSocket'
 ```
-
+```
+# 可能需要加
+post_install do |installer|
+	installer.pods_project.targets.each do |target|
+	  target.build_configurations.each do |config|
+	    config.build_settings["EXCLUDED_ARCHS[sdk=iphonesimulator*]"] = "arm64"
+	  end
+	end
+end
+```
 ## Author
 
 Garenge, garenge@outlook.com

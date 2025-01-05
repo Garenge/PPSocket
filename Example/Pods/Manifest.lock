@@ -1,0 +1,27 @@
+PODS:
+  - CocoaAsyncSocket (7.6.5)
+  - PPCustomAsyncOperation (0.1.1)
+  - PPSocket (0.1.0):
+    - CocoaAsyncSocket
+    - PPCustomAsyncOperation
+
+DEPENDENCIES:
+  - PPSocket (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - CocoaAsyncSocket
+    - PPCustomAsyncOperation
+
+EXTERNAL SOURCES:
+  PPSocket:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
+  PPCustomAsyncOperation: f452884e64b75ee1aab9322490a5e77394cae9af
+  PPSocket: f12cbad08a94892ea0fb1fb47db1e2b2834fe783
+
+PODFILE CHECKSUM: c4521257d72a0c6e34aac1066a75d7f74ea59de3
+
+COCOAPODS: 1.15.2

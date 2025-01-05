@@ -28,9 +28,17 @@ TODO: Add long description of the pod here.
   s.source           = { :git => 'https://github.com/Garenge/PPSocket.git', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '10.0'
+  s.ios.deployment_target = '13.0'
 
   s.source_files = 'PPSocket/Classes/**/*'
+  
+  s.pod_target_xcconfig = {
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64',
+  }
+  
+  s.user_target_xcconfig = {
+    'EXCLUDED_ARCHS[sdk=iphonesimulator*]' => 'arm64',
+  }
   
   # s.resource_bundles = {
   #   'PPSocket' => ['PPSocket/Assets/*.png']
@@ -39,4 +47,6 @@ TODO: Add long description of the pod here.
   # s.public_header_files = 'Pod/Classes/**/*.h'
   # s.frameworks = 'UIKit', 'MapKit'
   # s.dependency 'AFNetworking', '~> 2.3'
+  s.dependency 'CocoaAsyncSocket'
+  s.dependency 'PPCustomAsyncOperation' #, :git => 'https://github.com/Garenge/PPCustomAsyncOperation.git', :branch => 'main'
 end
