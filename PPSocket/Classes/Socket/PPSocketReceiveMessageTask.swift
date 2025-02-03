@@ -19,11 +19,13 @@ public class PPSocketReceiveMessageTask: NSObject {
     /// 每个任务有独一无二的key
     var messageKey: String? {
         didSet {
-            if messageKey != nil {
-                DispatchQueue.main.async {
-                    self.initialReceiveSpeedTimer()
-                }
+            guard let messageKey = messageKey else {
+                return
             }
+            DispatchQueue.main.async {
+                self.initialReceiveSpeedTimer()
+            }
+            receiveMessageTimeoutInterver = 5
         }
     }
     /// 数据分包的总包数
@@ -66,6 +68,43 @@ public class PPSocketReceiveMessageTask: NSObject {
     /// 收到数据过程回调
     public var didReceiveDataProgressBlock: PPReceiveMessageTaskBlock?
     
+    /// 默认超时时间, 部分指令从发出就开始等待接收, 设置等待超时时间, 如果超时, 就取消接收任务
+    public var receiveMessageTimeoutInterver: TimeInterval = 5 {
+        didSet {
+            currentReceiveMessageTimeoutInterverCount = 0
+            guard receiveMessageTimeoutInterver > 0 else {
+                return
+            }
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else {
+                    return
+                }
+                self.initialReceiveMessageTimeoutTimer()
+            }
+        }
+    }
+    /// 超时倒计时的计数器
+    private var currentReceiveMessageTimeoutInterverCount: TimeInterval = 0
+    private var receiveMessageTimeoutTimer: Timer?
+    private func initialReceiveMessageTimeoutTimer() {
+        receiveMessageTimeoutTimer?.invalidate()
+        receiveMessageTimeoutTimer = Timer.init(timeInterval: 1, repeats: true, block: { [weak self] timer in
+            guard let self = self else {
+                return
+            }
+            self.currentReceiveMessageTimeoutInterverCount += 1
+            if currentReceiveMessageTimeoutInterverCount >= receiveMessageTimeoutInterver {
+                self.currentReceiveMessageTimeoutInterverCount = 0
+                self.finishReceiveTask()
+                print("当前: \(self) 接收数据超时")
+                self.receiveMessageTimeoutBlock?()
+            }
+        })
+        RunLoop.current.add(receiveMessageTimeoutTimer!, forMode: .default)
+    }
+    /// 超时的回调, 会自动取消任务
+    public var receiveMessageTimeoutBlock: (() -> ())?
+    
     /// 网速回调
     public var toReceiveTransSpeedChangedBlock: ((_ speed: UInt64) -> ())?
     /// 网速
@@ -98,9 +137,14 @@ public class PPSocketReceiveMessageTask: NSObject {
     }
     
     public func finishReceiveTask() {
+        // 结束网速计算
         self.calculateReceiveSpeed()
         toReceiveSpeedTimer?.invalidate()
         toReceiveSpeedTimer = nil
         self.calculateReceiveSpeed()
+        
+        // 结束倒计时定时器
+        receiveMessageTimeoutTimer?.invalidate()
+        receiveMessageTimeoutTimer = nil
     }
 }

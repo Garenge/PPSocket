@@ -121,7 +121,15 @@ public class PPSocketBaseManager: NSObject {
         return queue
     }()
     
-    /// 直接发送数据, 直传(尽量文件不用直传, 采用文件专门的传输, 或者文件传输的时候, key用文件自己的key)
+    
+    /// 直接发送数据data, 直传(尽量文件不用直传, 采用文件专门的传输, 或者文件传输的时候, key用文件自己的key)
+    /// - Parameters:
+    ///   - socket: server和client使用自己的socket对象
+    ///   - data: 数据
+    ///   - messageKey: 如果希望回复的消息走block, 这个值必传
+    ///   - progressBlock: 进度回调block, 比如下载文件时
+    ///   - receiveBlock: 收到消息结束的block
+    /// - Returns: 返回一个本次使用的messagekey, 方便后期取消
     @discardableResult
     func sendDirectionData(socket: GCDAsyncSocket?, data: Data?, messageKey: String? = nil, progressBlock: PPReceiveMessageTaskBlock? = nil, receiveBlock: PPReceiveMessageTaskBlock?) -> String {
         let operation = PPCustomAsyncOperation()
@@ -357,6 +365,11 @@ public class PPSocketBaseManager: NSObject {
         
     }
     
+    /// 收到直传数据回复
+    func receiveDirectionData(_ messageFormat: PPSocketMessageFormat) {
+        
+    }
+    
     final func didReceiveData(data: Data) {
         
         autoreleasepool {
@@ -494,6 +507,10 @@ public class PPSocketBaseManager: NSObject {
                     case PPSocketActions.responseToCancelTask.getActionString():
                         // 取消任务
                         self.receiveResponseToCancelTask(messageFormat)
+                        break
+                    case PPSocketActions.directionData.getActionString():
+                        // 传输数据
+                        self.receiveDirectionData(messageFormat)
                         break
                     default:
                         break

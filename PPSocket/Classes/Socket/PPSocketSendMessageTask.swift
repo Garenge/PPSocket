@@ -106,7 +106,9 @@ class PPSocketSendMessageTask: NSObject {
             }
             self.calculateSendSpeed()
         })
-        RunLoop.current.add(toSendSpeedTimer!, forMode: .default)
+        if let toSendSpeedTimer = toSendSpeedTimer {
+            RunLoop.current.add(toSendSpeedTimer, forMode: .default)
+        }
     }
     
     private func calculateSendSpeed() {

@@ -11,7 +11,7 @@ import PPCustomAsyncOperation
 
 public class PPServerSocketManager: PPSocketBaseManager {
     
-    lazy var socket: GCDAsyncSocket = {
+    public lazy var socket: GCDAsyncSocket = {
         let socket = GCDAsyncSocket(delegate: self, delegateQueue: DispatchQueue.main)
         return socket
     }()
@@ -28,6 +28,11 @@ public class PPServerSocketManager: PPSocketBaseManager {
     var clientSocket: GCDAsyncSocket?
     
     let rootPath = "/Users/garenge/Downloads"
+    
+    public func sendDirectionMessage(_ message: String, messageKey: String) {
+        let messageFormat = PPSocketMessageFormat.format(action: .directionData, content: message, messageKey: messageKey)
+        self.sendDirectionData(socket: self.clientSocket, data: messageFormat.pp_convertToJsonData(), messageKey: messageKey, receiveBlock: nil)
+    }
     
     override func receiveRequestFileList(_ messageFormat: PPSocketMessageFormat) {
         print("Server 收到文件列表请求")
@@ -50,6 +55,11 @@ public class PPServerSocketManager: PPSocketBaseManager {
         print("Server 收到取消任务请求")
         print(messageFormat)
         self.cancelSendingTask(socket: self.clientSocket, content: messageFormat.content, messageKey: messageFormat.messageKey, receiveBlock: nil)
+    }
+    
+    public var didReceiveDirectionDataBlock: ((_ message: String?, _ messageKey: String) -> Void)?
+    override func receiveDirectionData(_ messageFormat: PPSocketMessageFormat) {
+        self.didReceiveDirectionDataBlock?(messageFormat.content, messageFormat.messageKey)
     }
     
 }

@@ -10,12 +10,12 @@ import CocoaAsyncSocket
 
 public class PPClientSocketManager: PPSocketBaseManager {
     
-    lazy var socket: GCDAsyncSocket = {
+    @objc public lazy var socket: GCDAsyncSocket = {
         let socket = GCDAsyncSocket(delegate: self, delegateQueue: DispatchQueue.main)
         return socket
     }()
     
-    public func connect(host: String = "127.0.0.1", port: UInt16 = 12123) {
+    @objc public func connect(host: String = "127.0.0.1", port: UInt16 = 12123) {
         if !self.socket.isConnected {
             do {
                 try self.socket.connect(toHost: host, onPort: port, withTimeout: -1)
@@ -50,23 +50,23 @@ public class PPClientSocketManager: PPSocketBaseManager {
 extension PPClientSocketManager {
     
     /// 发送消息
-    public func sendTestMessage() {
-        //        // 模拟多任务队列
-        //        do {
-        //            // 构造一个json
-        //            let json = ["name": "Client", "age": 18] as [String : Any]
-        //            if let data = try? JSONSerialization.data(withJSONObject: json, options: .prettyPrinted) {
-        //                self.sendDirectionData(socket: self.socket, data: data)
-        //            }
-        //        }
-        //        do {
-        //            guard let filePath = Bundle.main.path(forResource: "okzxVsJNxXc.jpg", ofType: nil) else {
-        //                print("文件不存在")
-        //                return
-        //            }
-        //            self.sendFileData(socket: self.socket, filePath: filePath)
-        //        }
-        //        self.sendQueryFileList()
+    @objc public func sendDirectionMessage(with message: String, completeHandler:((_ message: String?, _ error: NSError?) -> ())?) {
+        
+        let format = PPSocketMessageFormat.format(action: .directionData, content: message)
+        self.sendDirectionData(socket: self.socket, data: format.pp_convertToJsonData(), messageKey: format.messageKey, receiveBlock: { messageTask in
+            // 数据直传收到回复
+            print("Client 发送直连数据请求, 收到回复, \(messageTask?.description ?? "")");
+            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.messageKey) else {
+                completeHandler?(nil, NSError(domain: "com.garenge.socket", code: -1, userInfo: ["message": "数据解析失败"]))
+                return
+            }
+            let jsonDecoder = JSONDecoder()
+            guard let content = messageFormat.content else {
+                completeHandler?(nil, NSError(domain: "com.garenge.socket", code: -1, userInfo: ["message": "no content"]))
+                return
+            }
+            completeHandler?(content, nil)
+        })
     }
     
     /// 获取文件列表

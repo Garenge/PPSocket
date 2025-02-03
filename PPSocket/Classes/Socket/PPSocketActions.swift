@@ -25,6 +25,9 @@ enum PPSocketActions: String {
     /// 响应取消任务
     case responseToCancelTask
     
+    /// 数据直传
+    case directionData
+    
     /// 获取动作字符串, 长度不足18的在前面补0
     func getActionString() -> String {
         let actionString = self.rawValue
