@@ -180,7 +180,7 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
                 let completePacket = receiveBuffer.subdata(in: 0..<length)
                 
                 // 处理完整包数据
-                self.didReceiveData(data: completePacket)
+                self.socketDidReceiveData(data: completePacket)
                 
                 // 移除已处理的包
                 receiveBuffer.removeSubrange(0..<length)

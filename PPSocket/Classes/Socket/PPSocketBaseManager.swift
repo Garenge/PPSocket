@@ -370,7 +370,7 @@ public class PPSocketBaseManager: NSObject {
         
     }
     
-    final func didReceiveData(data: Data) {
+    final func socketDidReceiveData(data: Data) {
         
         autoreleasepool {
             if (data.count < prefixLength) {
@@ -411,9 +411,9 @@ public class PPSocketBaseManager: NSObject {
             // 根据messageTypeStr区分是文件, 还是json, 选择合适的方式拼接data
             switch PPSocketTransMessageType(rawValue: messageType) {
             case .directionData:
-                self.doReceiveData(messageBody!, data: data, parseIndex: parseIndex)
+                self.socketDoReceiveData(messageBody!, data: data, parseIndex: parseIndex)
             case .fileData: do {
-                self.doReceiveFile(messageBody!, data: data, parseIndex: parseIndex)
+                self.socketDoReceiveFile(messageBody!, data: data, parseIndex: parseIndex)
             }
             default:
                 break
@@ -422,7 +422,7 @@ public class PPSocketBaseManager: NSObject {
     }
     
     /// 处理收到的文件数据
-    func doReceiveFile(_ messageBody: PPSocketReceiveMessageTask, data: Data, parseIndex: Int) {
+    func socketDoReceiveFile(_ messageBody: PPSocketReceiveMessageTask, data: Data, parseIndex: Int) {
         autoreleasepool {
             guard let messageKey = messageBody.messageKey else {
                 return
@@ -465,7 +465,7 @@ public class PPSocketBaseManager: NSObject {
     }
     
     /// 处理收到的data数据
-    final func doReceiveData(_ messageBody: PPSocketReceiveMessageTask, data: Data, parseIndex: Int) {
+    final func socketDoReceiveData(_ messageBody: PPSocketReceiveMessageTask, data: Data, parseIndex: Int) {
         autoreleasepool {
             guard let messageKey = messageBody.messageKey else {
                 return
