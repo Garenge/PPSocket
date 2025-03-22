@@ -37,12 +37,12 @@ public class PPClientSocketManager: PPSocketBaseManager {
     var receiveBuffer = Data()
     
     /// 这个方法其实不会相应, 因为一对一的任务, 基本已经在block中回调了, 如果实现了block, 就不会走这个自定义方法
-    override func receiveResponseFileList(_ messageFormat: PPSocketMessageFormat) {
+    override func receiveResponseFileList(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         print("Client 收到文件列表响应")
         print(messageFormat)
     }
     /// 这个方法其实不会相应, 因为一对一的任务, 基本已经在block中回调了, 如果实现了block, 就不会走这个自定义方法
-    override func receiveResponseToCancelTask(_ messageFormat: PPSocketMessageFormat) {
+    override func receiveResponseToCancelTask(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         print("Client 收到取消任务响应")
         print(messageFormat)
     }
@@ -158,7 +158,7 @@ extension PPClientSocketManager: GCDAsyncSocketDelegate {
                 let completePacket = receiveBuffer.subdata(in: 0..<length)
                 
                 // 处理完整包数据
-                self.socketDidReceiveData(data: completePacket)
+                self.socketDidReceiveData(sock, data: completePacket)
                 
                 // 移除已处理的包
                 receiveBuffer.removeSubrange(0..<length)

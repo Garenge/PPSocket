@@ -341,36 +341,36 @@ public class PPSocketBaseManager: NSObject {
     }
     
     /// 收到文件列表请求
-    func receiveRequestFileList(_ messageFormat: PPSocketMessageFormat) {
+    func receiveRequestFileList(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         
     }
     
     /// 收到文件列表回复
-    func receiveResponseFileList(_ messageFormat: PPSocketMessageFormat) {
+    func receiveResponseFileList(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         
     }
     
     /// 收到下载文件请求
-    func receiveRequestToDownloadFile(_ messageFormat: PPSocketMessageFormat) {
+    func receiveRequestToDownloadFile(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         
     }
     
     /// 收到取消任务请求
-    func receiveRequestToCancelTask(_ messageFormat: PPSocketMessageFormat) {
+    func receiveRequestToCancelTask(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         
     }
     
     /// 收到取消任务回复
-    func receiveResponseToCancelTask(_ messageFormat: PPSocketMessageFormat) {
+    func receiveResponseToCancelTask(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         
     }
     
     /// 收到直传数据回复
-    func receiveDirectionData(_ messageFormat: PPSocketMessageFormat) {
+    func receiveDirectionData(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         
     }
     
-    final func socketDidReceiveData(data: Data) {
+    final func socketDidReceiveData(_ sock: GCDAsyncSocket, data: Data) {
         
         autoreleasepool {
             if (data.count < prefixLength) {
@@ -411,9 +411,9 @@ public class PPSocketBaseManager: NSObject {
             // 根据messageTypeStr区分是文件, 还是json, 选择合适的方式拼接data
             switch PPSocketTransMessageType(rawValue: messageType) {
             case .directionData:
-                self.socketDoReceiveData(messageBody!, data: data, parseIndex: parseIndex)
+                self.socketDoReceiveData(messageBody!, sock: sock, data: data, parseIndex: parseIndex)
             case .fileData: do {
-                self.socketDoReceiveFile(messageBody!, data: data, parseIndex: parseIndex)
+                self.socketDoReceiveFile(messageBody!, sock: sock, data: data, parseIndex: parseIndex)
             }
             default:
                 break
@@ -422,7 +422,7 @@ public class PPSocketBaseManager: NSObject {
     }
     
     /// 处理收到的文件数据
-    func socketDoReceiveFile(_ messageBody: PPSocketReceiveMessageTask, data: Data, parseIndex: Int) {
+    func socketDoReceiveFile(_ messageBody: PPSocketReceiveMessageTask, sock: GCDAsyncSocket, data: Data, parseIndex: Int) {
         autoreleasepool {
             guard let messageKey = messageBody.messageKey else {
                 return
@@ -465,7 +465,7 @@ public class PPSocketBaseManager: NSObject {
     }
     
     /// 处理收到的data数据
-    final func socketDoReceiveData(_ messageBody: PPSocketReceiveMessageTask, data: Data, parseIndex: Int) {
+    final func socketDoReceiveData(_ messageBody: PPSocketReceiveMessageTask, sock: GCDAsyncSocket, data: Data, parseIndex: Int) {
         autoreleasepool {
             guard let messageKey = messageBody.messageKey else {
                 return
@@ -492,25 +492,25 @@ public class PPSocketBaseManager: NSObject {
                 if let messageFormat = PPSocketMessageFormat.format(from: messageBody.directionData!, messageKey: messageKey) {
                     switch messageFormat.action {
                     case PPSocketActions.requestFileList.getActionString():
-                        self.receiveRequestFileList(messageFormat)
+                        self.receiveRequestFileList(messageFormat, sock: sock)
                         break
                     case PPSocketActions.responseFileList.getActionString():
-                        self.receiveResponseFileList(messageFormat)
+                        self.receiveResponseFileList(messageFormat, sock: sock)
                         break
                     case PPSocketActions.requestToDownloadFile.getActionString():
-                        self.receiveRequestToDownloadFile(messageFormat)
+                        self.receiveRequestToDownloadFile(messageFormat, sock: sock)
                         break
                     case PPSocketActions.requestToCancelTask.getActionString():
                         // 取消任务
-                        self.receiveRequestToCancelTask(messageFormat)
+                        self.receiveRequestToCancelTask(messageFormat, sock: sock)
                         break
                     case PPSocketActions.responseToCancelTask.getActionString():
                         // 取消任务
-                        self.receiveResponseToCancelTask(messageFormat)
+                        self.receiveResponseToCancelTask(messageFormat, sock: sock)
                         break
                     case PPSocketActions.directionData.getActionString():
                         // 传输数据
-                        self.receiveDirectionData(messageFormat)
+                        self.receiveDirectionData(messageFormat, sock: sock)
                         break
                     default:
                         break

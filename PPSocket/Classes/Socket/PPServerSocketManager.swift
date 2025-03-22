@@ -27,16 +27,17 @@ public class PPServerSocketManager: PPSocketBaseManager {
         }
     }
     
-    public var clientSocket: GCDAsyncSocket?
+//    public var clientSocket: GCDAsyncSocket?
+    public var clientSocketDic: [String: GCDAsyncSocket] = [:]
     
     public var doServerAcceptPortClosure: ((_ manager: PPServerSocketManager, _ port: UInt16, _ err: NSError?) -> Void)?
     
-    public func sendDirectionMessage(_ message: String, messageKey: String) {
+    public func sendDirectionMessage(sock: GCDAsyncSocket, message: String, messageKey: String) {
         let messageFormat = PPSocketMessageFormat.format(action: .directionData, content: message, messageKey: messageKey)
-        self.sendDirectionData(socket: self.clientSocket, data: messageFormat.pp_convertToJsonData(), messageKey: messageKey, receiveBlock: nil)
+        self.sendDirectionData(socket: sock, data: messageFormat.pp_convertToJsonData(), messageKey: messageKey, receiveBlock: nil)
     }
-    public var doServerAcceptNewSocketClosure: ((_ manager: PPServerSocketManager, _ newSocket: GCDAsyncSocket) -> Void)?
-    public var doServerLossClientSocketClosure: ((_ manager: PPServerSocketManager, _ newSocket: GCDAsyncSocket, _ err: Error?) -> Void)?
+    public var doServerAcceptNewSocketClosure: ((_ manager: PPServerSocketManager, _ clientSocket: GCDAsyncSocket) -> Void)?
+    public var doServerLossClientSocketClosure: ((_ manager: PPServerSocketManager, _ clientSocket: GCDAsyncSocket, _ err: Error?) -> Void)?
     
     public var rootPath = "/Users/garenge/Downloads"
     
@@ -44,31 +45,31 @@ public class PPServerSocketManager: PPSocketBaseManager {
     /// 为了兼容多socket, 该值改为字典, key是对应发送消息的socket的地址, value是该socket对应发送的数据
     var receiveBufferDic: [String: Data] = [:]
     
-    override func receiveRequestFileList(_ messageFormat: PPSocketMessageFormat) {
+    override func receiveRequestFileList(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         print("Server 收到文件列表请求")
         print(messageFormat)
         
-        self.sendFolderList(folderPath: messageFormat.content, messageKey: messageFormat.messageKey)
+        self.sendFolderList(sock: sock, folderPath: messageFormat.content, messageKey: messageFormat.messageKey)
     }
     
-    override func receiveRequestToDownloadFile(_ messageFormat: PPSocketMessageFormat) {
+    override func receiveRequestToDownloadFile(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         print("Server 收到下载文件请求")
         print(messageFormat)
         guard let content = messageFormat.content else {
-            self.sendDirectionData(socket: self.clientSocket, data: nil, messageKey: messageFormat.messageKey, receiveBlock: nil)
+            self.sendDirectionData(socket: sock, data: nil, messageKey: messageFormat.messageKey, receiveBlock: nil)
             return
         }
-        self.sendFile(filePath: content, messageKey: messageFormat.messageKey)
+        self.sendFile(sock: sock, filePath: content, messageKey: messageFormat.messageKey)
     }
     
-    override func receiveRequestToCancelTask(_ messageFormat: PPSocketMessageFormat) {
+    override func receiveRequestToCancelTask(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         print("Server 收到取消任务请求")
         print(messageFormat)
-        self.cancelSendingTask(socket: self.clientSocket, content: messageFormat.content, messageKey: messageFormat.messageKey, receiveBlock: nil)
+        self.cancelSendingTask(socket: sock, content: messageFormat.content, messageKey: messageFormat.messageKey, receiveBlock: nil)
     }
     
     public var didReceiveDirectionDataBlock: ((_ message: String?, _ messageKey: String) -> Void)?
-    override func receiveDirectionData(_ messageFormat: PPSocketMessageFormat) {
+    override func receiveDirectionData(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         self.didReceiveDirectionDataBlock?(messageFormat.content, messageFormat.messageKey)
     }
     
@@ -98,7 +99,7 @@ extension PPServerSocketManager {
     }
     
     /// 发送文件夹下的文件列表 folderPath: 空表示根目录
-    func sendFolderList(folderPath: String?, messageKey: String?) {
+    func sendFolderList(sock: GCDAsyncSocket, folderPath: String?, messageKey: String?) {
         
         var messageFormat = PPSocketMessageFormat.format(action: .responseFileList, content: nil, messageKey: messageKey)
         
@@ -136,23 +137,23 @@ extension PPServerSocketManager {
         }
         messageFormat.content = responseStr
         
-        self.sendDirectionData(socket: self.clientSocket, data: messageFormat.pp_convertToJsonData(), messageKey: messageKey, receiveBlock: nil)
+        self.sendDirectionData(socket: sock, data: messageFormat.pp_convertToJsonData(), messageKey: messageKey, receiveBlock: nil)
     }
     
     /// 发送文件信息
-    public func sendFileInfo(filePath: String) {
+    public func sendFileInfo(sock: GCDAsyncSocket, filePath: String) {
         var fileModel = PPFileModel()
         fileModel.filePath = filePath
         
         guard let jsonDic = fileModel.pp_convertToDict(), let jsonData = try? JSONSerialization.data(withJSONObject: jsonDic, options: .prettyPrinted) else {
             return
         }
-        self.sendDirectionData(socket: self.clientSocket, data: jsonData, receiveBlock: nil)
+        self.sendDirectionData(socket: sock, data: jsonData, receiveBlock: nil)
     }
     
     /// 发送文件流
-    func sendFile(filePath: String, messageKey: String?) {
-        self.sendFileData(socket: self.clientSocket, filePath: filePath, messageKey: messageKey)
+    func sendFile(sock: GCDAsyncSocket, filePath: String, messageKey: String?) {
+        self.sendFileData(socket: sock, filePath: filePath, messageKey: messageKey)
     }
     
 }
@@ -166,12 +167,13 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
     // 这里的sock就是self.socket, newSocket是self.clientSocket
     public func socket(_ sock: GCDAsyncSocket, didAcceptNewSocket newSocket: GCDAsyncSocket) {
         print("Server accept new socket")
-        self.clientSocket = newSocket
-        // 重置
         let key = String(format: "%p", newSocket)
+        self.clientSocketDic[key] = newSocket
+        // 重置
+        
         receiveBufferDic[key] = Data()
-        self.clientSocket?.readData(withTimeout: -1, tag: 10086)
-        self.doServerAcceptNewSocketClosure?(self, sock)
+        newSocket.readData(withTimeout: -1, tag: 10086)
+        self.doServerAcceptNewSocketClosure?(self, newSocket)
     }
     
     // 这里的sock就是self.clientSocket
@@ -179,8 +181,11 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
         print("Server 已断开: \(String(describing: err))")
         self.cancelAllSendOperation()
         self.cancelALLReceiveTask()
-        // 重置
+        
         let key = String(format: "%p", sock)
+        self.clientSocketDic[key] = nil
+        // 重置
+        
         receiveBufferDic[key] = Data()
         self.doServerLossClientSocketClosure?(self, sock, err)
     }
@@ -189,7 +194,7 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
     public func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
         
         let key = String(format: "%p", sock)
-        // 一个client只会有一个server, 所以其实这个字典拿出来的数据, 只会是唯一值
+        // 一个server会有多个client
         var receiveBuffer = receiveBufferDic[key] ?? Data()
         
         // 将新收到的数据追加到缓冲区
@@ -210,7 +215,7 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
                 let completePacket = receiveBuffer.subdata(in: 0..<length)
                 
                 // 处理完整包数据
-                self.socketDidReceiveData(data: completePacket)
+                self.socketDidReceiveData(sock, data: completePacket)
                 
                 // 移除已处理的包
                 receiveBuffer.removeSubrange(0..<length)
@@ -220,7 +225,7 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
             }
         }
         
-        self.clientSocket?.readData(withTimeout: -1, tag: 10086)
+        sock.readData(withTimeout: -1, tag: 10086)
     }
     
     // 这里的sock就是self.clientSocket
