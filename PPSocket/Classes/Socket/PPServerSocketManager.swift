@@ -159,6 +159,7 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
         print("Server 已连接 \(host):\(port)")
     }
     
+    // 这里的sock就是self.socket, newSocket是self.clientSocket
     public func socket(_ sock: GCDAsyncSocket, didAcceptNewSocket newSocket: GCDAsyncSocket) {
         print("Server accept new socket")
         self.clientSocket = newSocket
@@ -166,6 +167,7 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
         self.doServerAcceptNewSocketClosure?(self, sock)
     }
     
+    // 这里的sock就是self.clientSocket
     public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
         print("Server 已断开: \(String(describing: err))")
         self.cancelAllSendOperation()
@@ -173,6 +175,7 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
         self.doServerLossClientSocketClosure?(self, sock, err)
     }
     
+    // 这里的sock就是self.clientSocket
     public func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
         // 将新收到的数据追加到缓冲区
         receiveBuffer.append(data)
@@ -205,8 +208,9 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
         self.clientSocket?.readData(withTimeout: -1, tag: 10086)
     }
     
+    // 这里的sock就是self.clientSocket
     public func socket(_ sock: GCDAsyncSocket, didWriteDataWithTag tag: Int) {
-//        print("Server 已发送消息, tag:\(tag)")
-        self.sendBodyMessage(socket: self.clientSocket)
+        print("Server 已发送消息, tag:\(tag)")
+        self.sendBodyMessage(socket: sock)
     }
 }

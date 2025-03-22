@@ -124,13 +124,13 @@ extension PPClientSocketManager {
 }
 
 extension PPClientSocketManager: GCDAsyncSocketDelegate {
-    
+    // 这里的sock就是self.socket
     public func socket(_ sock: GCDAsyncSocket, didConnectToHost host: String, port: UInt16) {
         print("Client 已连接 \(host):\(port)")
         self.doClientDidConnectedClosure?(self, sock)
         self.socket.readData(withTimeout: -1, tag: 10086)
     }
-    
+    // 这里的sock就是self.socket
     public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {
         print("Client 已断开: \(String(describing: err))")
         self.cancelAllSendOperation()
@@ -138,6 +138,7 @@ extension PPClientSocketManager: GCDAsyncSocketDelegate {
         self.doClientDidDisconnectClosure?(self, sock, err)
     }
     
+    // 这里的sock就是self.socket
     public func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
         
 //        print("Client 已收到消息:")
@@ -167,9 +168,9 @@ extension PPClientSocketManager: GCDAsyncSocketDelegate {
         // 继续读取数据
         sock.readData(withTimeout: -1, tag: tag)
     }
-    
+    // 这里的sock就是self.socket
     public func socket(_ sock: GCDAsyncSocket, didWriteDataWithTag tag: Int) {
-        print("Client 已发送消息")
+        print("Client 已发送消息, tag:\(tag)")
         self.sendBodyMessage(socket: self.socket)
     }
 }
