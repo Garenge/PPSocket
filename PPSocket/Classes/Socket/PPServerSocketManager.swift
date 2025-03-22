@@ -40,6 +40,10 @@ public class PPServerSocketManager: PPSocketBaseManager {
     
     public var rootPath = "/Users/garenge/Downloads"
     
+    /// tcp是数据流, 所以不代表每次拿到数据就是完整的, 需要自己处理数据的完整性
+    /// 为了兼容多socket, 该值改为字典, key是对应发送消息的socket的地址, value是该socket对应发送的数据
+    var receiveBufferDic: [String: Data] = [:]
+    
     override func receiveRequestFileList(_ messageFormat: PPSocketMessageFormat) {
         print("Server 收到文件列表请求")
         print(messageFormat)
@@ -163,6 +167,9 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
     public func socket(_ sock: GCDAsyncSocket, didAcceptNewSocket newSocket: GCDAsyncSocket) {
         print("Server accept new socket")
         self.clientSocket = newSocket
+        // 重置
+        let key = String(format: "%p", newSocket)
+        receiveBufferDic[key] = Data()
         self.clientSocket?.readData(withTimeout: -1, tag: 10086)
         self.doServerAcceptNewSocketClosure?(self, sock)
     }
@@ -172,11 +179,19 @@ extension PPServerSocketManager: GCDAsyncSocketDelegate {
         print("Server 已断开: \(String(describing: err))")
         self.cancelAllSendOperation()
         self.cancelALLReceiveTask()
+        // 重置
+        let key = String(format: "%p", sock)
+        receiveBufferDic[key] = Data()
         self.doServerLossClientSocketClosure?(self, sock, err)
     }
     
     // 这里的sock就是self.clientSocket
     public func socket(_ sock: GCDAsyncSocket, didRead data: Data, withTag tag: Int) {
+        
+        let key = String(format: "%p", sock)
+        // 一个client只会有一个server, 所以其实这个字典拿出来的数据, 只会是唯一值
+        var receiveBuffer = receiveBufferDic[key] ?? Data()
+        
         // 将新收到的数据追加到缓冲区
         receiveBuffer.append(data)
         

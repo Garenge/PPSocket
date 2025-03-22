@@ -33,6 +33,9 @@ public class PPClientSocketManager: PPSocketBaseManager {
     /// Socket断开连接
     @objc public var doClientDidDisconnectClosure: ((_ manager: PPClientSocketManager, _ socket: GCDAsyncSocket, _ error: Error?) -> Void)?
     
+    /// tcp是数据流, 所以不代表每次拿到数据就是完整的, 需要自己处理数据的完整性
+    var receiveBuffer = Data()
+    
     /// 这个方法其实不会相应, 因为一对一的任务, 基本已经在block中回调了, 如果实现了block, 就不会走这个自定义方法
     override func receiveResponseFileList(_ messageFormat: PPSocketMessageFormat) {
         print("Client 收到文件列表响应")

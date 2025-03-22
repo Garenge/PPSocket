@@ -327,9 +327,6 @@ public class PPSocketBaseManager: NSObject {
         }
     }
     
-    /// tcp是数据流, 所以不代表每次拿到数据就是完整的, 需要自己处理数据的完整性
-    var receiveBuffer = Data()
-    
     func getDocumentDirectory() -> String {
         let docuPaths = NSSearchPathForDirectoriesInDomains(.documentDirectory,
                                                             .userDomainMask, true)
