@@ -130,7 +130,7 @@ struct PPSocketMessageFormat: Codable, PPSocketConvertable {
 var GCDAsyncSocketAssociatedKey_name: UInt8 = 0
 extension GCDAsyncSocket {
         
-    var name: String? {
+    public var name: String? {
         get {
             return objc_getAssociatedObject(self, &GCDAsyncSocketAssociatedKey_name) as? String
         }
