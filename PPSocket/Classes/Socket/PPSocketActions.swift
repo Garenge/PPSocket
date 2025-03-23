@@ -39,3 +39,47 @@ enum PPSocketActions: String {
         return actionString
     }
 }
+
+/// 专门构造一个模型, 专门整理直连数据的格式
+struct PPSocketDirectionMsg: PPSocketConvertable {
+    
+    enum MsgType: String {
+        case common
+        case deviceName
+    }
+    
+    var timestamp: TimeInterval = Date().timeIntervalSince1970
+    var type: String
+    var content: String?
+    
+    init(type: String = MsgType.common.rawValue, content: String? = nil) {
+        self.type = type
+        self.content = content
+    }
+    
+    init(type: MsgType = .common, content: String) {
+        self.type = type.rawValue
+        self.content = content
+    }
+    
+    func toString() -> String {
+        return self.pp_convertToString() ?? ""
+    }
+    
+    init?(data: Data?) {
+        guard let data = data else {
+            return nil
+        }
+        do {
+            let decoder = JSONDecoder()
+            let msg = try decoder.decode(PPSocketDirectionMsg.self, from: data)
+            self.timestamp = msg.timestamp
+            self.type = msg.type
+            self.content = msg.content
+        } catch {
+            print(error)
+            return nil
+        }
+    }
+    
+}

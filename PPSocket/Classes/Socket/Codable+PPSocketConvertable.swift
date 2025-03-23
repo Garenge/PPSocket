@@ -41,6 +41,13 @@ extension PPSocketConvertable {
         }
         return nil
     }
+    
+    func pp_convertToString() -> String? {
+        guard let jsonData = pp_convertToJsonData() else {
+            return nil
+        }
+        return String(data: jsonData, encoding: .utf8)
+    }
 }
 
 extension Array where Element: PPSocketConvertable {
@@ -56,5 +63,12 @@ extension Array where Element: PPSocketConvertable {
             print(error)
         }
         return nil
+    }
+    
+    func pp_convertToString() -> String? {
+        guard let jsonData = pp_convertToJsonData() else {
+            return nil
+        }
+        return String(data: jsonData, encoding: .utf8)
     }
 }

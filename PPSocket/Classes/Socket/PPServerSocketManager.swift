@@ -33,7 +33,7 @@ public class PPServerSocketManager: PPSocketBaseManager {
     public var doServerAcceptPortClosure: ((_ manager: PPServerSocketManager, _ port: UInt16, _ err: NSError?) -> Void)?
     
     public func sendDirectionMessage(sock: GCDAsyncSocket, message: String, messageKey: String) {
-        let messageFormat = PPSocketMessageFormat.format(action: .directionData, content: message, messageKey: messageKey)
+        let messageFormat = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(content: message), messageKey: messageKey)
         self.sendDirectionData(socket: sock, data: messageFormat.pp_convertToJsonData(), messageKey: messageKey, receiveBlock: nil)
     }
     public var doServerAcceptNewSocketClosure: ((_ manager: PPServerSocketManager, _ clientSocket: GCDAsyncSocket) -> Void)?
@@ -69,8 +69,31 @@ public class PPServerSocketManager: PPSocketBaseManager {
     }
     
     public var didReceiveDirectionDataBlock: ((_ message: String?, _ messageKey: String) -> Void)?
+    public var didReceivedClientSocketDeviceName: ((_ deviceName: String?, _ clientSocket: GCDAsyncSocket) -> Void)?
     override func receiveDirectionData(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
-        self.didReceiveDirectionDataBlock?(messageFormat.content, messageFormat.messageKey)
+        
+        // 解析content {"content":"iPhone 16 Pro","type":"deviceName","timestamp":1742704364.828758}
+        // 转成PPSocketDirectionMsg模型
+        guard let content = messageFormat.content, let directionMsg = PPSocketDirectionMsg(data: content.data(using: .utf8)) else {
+            return
+        }
+        print("Server 收到直连数据: \(content)")
+        
+        guard let type = PPSocketDirectionMsg.MsgType(rawValue: directionMsg.type) else {
+            return
+        }
+        
+        switch type {
+        case .common:
+            print("Server 收到普通直连数据: \(directionMsg.content ?? "")")
+        case .deviceName:
+            print("Server 收到设备名称直连数据: \(directionMsg.content ?? "")")
+            sock.name = directionMsg.content
+            self.didReceivedClientSocketDeviceName?(directionMsg.content, sock)
+            return
+        }
+        
+        self.didReceiveDirectionDataBlock?(directionMsg.content, messageFormat.messageKey)
     }
     
 }

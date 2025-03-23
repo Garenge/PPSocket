@@ -59,7 +59,7 @@ extension PPClientSocketManager {
     /// 发送消息
     @objc public func sendDirectionMessage(with message: String, completeHandler:((_ message: String?, _ error: NSError?) -> ())?) {
         
-        let format = PPSocketMessageFormat.format(action: .directionData, content: message)
+        let format = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(content: message))
         self.sendDirectionData(socket: self.socket, data: format.pp_convertToJsonData(), messageKey: format.messageKey, receiveBlock: { messageTask in
             // 数据直传收到回复
             print("Client 发送直连数据请求, 收到回复, \(messageTask?.description ?? "")");
@@ -124,6 +124,24 @@ extension PPClientSocketManager {
         }
         return messageKey
     }
+    
+    @objc public func sendDeviceName(_ name: String, completeHandler:((_ message: String?, _ error: NSError?) -> ())?) {
+        let format = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(type: .deviceName, content: name))
+        self.sendDirectionData(socket: self.socket, data: format.pp_convertToJsonData(), messageKey: format.messageKey, receiveBlock: { messageTask in
+            // 数据直传收到回复
+            print("Client 发送直连数据请求, 收到回复, \(messageTask?.description ?? "")");
+            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.messageKey) else {
+                completeHandler?(nil, NSError(domain: "com.garenge.socket", code: -1, userInfo: ["message": "数据解析失败"]))
+                return
+            }
+            let jsonDecoder = JSONDecoder()
+            guard let content = messageFormat.content else {
+                completeHandler?(nil, NSError(domain: "com.garenge.socket", code: -1, userInfo: ["message": "no content"]))
+                return
+            }
+            completeHandler?(content, nil)
+        })
+    }
 }
 
 extension PPClientSocketManager: GCDAsyncSocketDelegate {
@@ -132,6 +150,10 @@ extension PPClientSocketManager: GCDAsyncSocketDelegate {
         print("Client 已连接 \(host):\(port)")
         self.doClientDidConnectedClosure?(self, sock)
         self.socket.readData(withTimeout: -1, tag: 10086)
+        
+        let deviceName = UIDevice.current.name
+        print("设备名称: \(deviceName)")
+        self.sendDeviceName(deviceName, completeHandler: nil)
     }
     // 这里的sock就是self.socket
     public func socketDidDisconnect(_ sock: GCDAsyncSocket, withError err: Error?) {

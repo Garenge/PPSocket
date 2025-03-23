@@ -87,6 +87,16 @@ struct PPSocketMessageFormat: Codable, PPSocketConvertable {
         return format
     }
     
+    static func format(action: PPSocketActions, content: PPSocketDirectionMsg, messageKey: String? = nil, errorCode: String? = nil) -> PPSocketMessageFormat {
+        var format = PPSocketMessageFormat()
+        format.action = action.getActionString()
+        format.content = content.toString()
+        if let key = messageKey {
+            format.messageKey = key
+        }
+        return format
+    }
+    
     static func format(from: Data?, messageKey: String? = nil) -> PPSocketMessageFormat? {
         if let data = from {
             let decoder = JSONDecoder()
@@ -98,6 +108,35 @@ struct PPSocketMessageFormat: Codable, PPSocketConvertable {
             }
         }
         return nil
+    }
+    
+    /// ✅ 手动添加默认构造方法
+    init() { }
+    
+    init?(from: Data?, messageKey: String? = nil) {
+        if let data = from {
+            let decoder = JSONDecoder()
+            if let model = try? decoder.decode(PPSocketMessageFormat.self, from: data) {
+                self = model
+                if let key = messageKey {
+                    self.messageKey = key
+                }
+            }
+        }
+        return nil
+    }
+}
+
+var GCDAsyncSocketAssociatedKey_name: UInt8 = 0
+extension GCDAsyncSocket {
+        
+    var name: String? {
+        get {
+            return objc_getAssociatedObject(self, &GCDAsyncSocketAssociatedKey_name) as? String
+        }
+        set {
+            objc_setAssociatedObject(self, &GCDAsyncSocketAssociatedKey_name, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
     }
 }
 
