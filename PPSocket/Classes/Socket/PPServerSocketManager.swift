@@ -33,7 +33,7 @@ public class PPServerSocketManager: PPSocketBaseManager {
     public var doServerAcceptPortClosure: ((_ manager: PPServerSocketManager, _ port: UInt16, _ err: NSError?) -> Void)?
     
     public func sendDirectionMessage(sock: GCDAsyncSocket, message: String, messageKey: String) {
-        let messageFormat = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(content: message), messageKey: messageKey)
+        let messageFormat = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(type: .common, content: message), messageKey: messageKey)
         self.sendDirectionData(socket: sock, data: messageFormat.pp_convertToJsonData(), messageKey: messageKey, receiveBlock: nil)
     }
     public var doServerAcceptNewSocketClosure: ((_ manager: PPServerSocketManager, _ clientSocket: GCDAsyncSocket) -> Void)?
@@ -91,6 +91,7 @@ public class PPServerSocketManager: PPSocketBaseManager {
             sock.name = directionMsg.content
             self.didReceivedClientSocketDeviceName?(directionMsg.content, sock)
             return
+        default: break
         }
         
         self.didReceiveDirectionDataBlock?(directionMsg.content, messageFormat.messageKey)
@@ -177,6 +178,12 @@ extension PPServerSocketManager {
     /// 发送文件流
     func sendFile(sock: GCDAsyncSocket, filePath: String, messageKey: String?) {
         self.sendFileData(socket: sock, filePath: filePath, messageKey: messageKey)
+    }
+    
+    /// 移除客户端
+    public func sendRemoveClient(toRemoveSock: GCDAsyncSocket) {
+        let format = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(type: .removeClient))
+        self.sendDirectionData(socket: toRemoveSock, data: format.pp_convertToJsonData(), messageKey: nil, receiveBlock: nil)
     }
     
 }

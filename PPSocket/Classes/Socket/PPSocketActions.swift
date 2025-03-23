@@ -46,6 +46,7 @@ struct PPSocketDirectionMsg: PPSocketConvertable {
     enum MsgType: String {
         case common
         case deviceName
+        case removeClient
     }
     
     var timestamp: TimeInterval = Date().timeIntervalSince1970
@@ -57,7 +58,7 @@ struct PPSocketDirectionMsg: PPSocketConvertable {
         self.content = content
     }
     
-    init(type: MsgType = .common, content: String) {
+    init(type: MsgType = .common, content: String? = nil) {
         self.type = type.rawValue
         self.content = content
     }

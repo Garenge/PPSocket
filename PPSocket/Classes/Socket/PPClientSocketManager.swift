@@ -32,6 +32,8 @@ public class PPClientSocketManager: PPSocketBaseManager {
     @objc public var doClientDidConnectedClosure: ((_ manager: PPClientSocketManager, _ socket: GCDAsyncSocket) -> Void)?
     /// Socket断开连接
     @objc public var doClientDidDisconnectClosure: ((_ manager: PPClientSocketManager, _ socket: GCDAsyncSocket, _ error: Error?) -> Void)?
+    /// 被server移除
+    @objc public var doClientDidRemovedByServerClosure: ((_ manager: PPClientSocketManager, _ socket: GCDAsyncSocket) -> Void)?
     
     /// tcp是数据流, 所以不代表每次拿到数据就是完整的, 需要自己处理数据的完整性
     var receiveBuffer = Data()
@@ -47,6 +49,34 @@ public class PPClientSocketManager: PPSocketBaseManager {
         print(messageFormat)
     }
     
+    public var didReceiveDirectionDataBlock: ((_ message: String?, _ messageKey: String) -> Void)?
+    /// 收到对方的直连数据
+    override func receiveDirectionData(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
+        
+        // 解析content {"content":"iPhone 16 Pro","type":"deviceName","timestamp":1742704364.828758}
+        // 转成PPSocketDirectionMsg模型
+        guard let content = messageFormat.content, let directionMsg = PPSocketDirectionMsg(data: content.data(using: .utf8)) else {
+            return
+        }
+        print("Server 收到直连数据: \(content)")
+        
+        guard let type = PPSocketDirectionMsg.MsgType(rawValue: directionMsg.type) else {
+            return
+        }
+        
+        switch type {
+        case .common:
+            print("Server 收到普通直连数据: \(directionMsg.content ?? "")")
+        case .removeClient:
+            print("收到Server端主动移除client端, 准备断开连接")
+            self.doClientDidRemovedByServerClosure?(self, self.socket)
+            self.socket.disconnect()
+        default: break
+        }
+        
+        self.didReceiveDirectionDataBlock?(directionMsg.content, messageFormat.messageKey)
+    }
+    
     /// 取消任务
     public func cancelRequest(_ messageKey: String?, receiveBlock: PPReceiveMessageTaskBlock?) {
         self.cancelSendingTask(socket: self.socket, content: messageKey, messageKey: nil, receiveBlock: receiveBlock)
@@ -59,7 +89,7 @@ extension PPClientSocketManager {
     /// 发送消息
     @objc public func sendDirectionMessage(with message: String, completeHandler:((_ message: String?, _ error: NSError?) -> ())?) {
         
-        let format = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(content: message))
+        let format = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(type: .common, content: message))
         self.sendDirectionData(socket: self.socket, data: format.pp_convertToJsonData(), messageKey: format.messageKey, receiveBlock: { messageTask in
             // 数据直传收到回复
             print("Client 发送直连数据请求, 收到回复, \(messageTask?.description ?? "")");
