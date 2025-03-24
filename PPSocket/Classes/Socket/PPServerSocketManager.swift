@@ -45,13 +45,6 @@ public class PPServerSocketManager: PPSocketBaseManager {
     /// 为了兼容多socket, 该值改为字典, key是对应发送消息的socket的地址, value是该socket对应发送的数据
     var receiveBufferDic: [String: Data] = [:]
     
-    override func receiveRequestFileList(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
-        print("Server 收到文件列表请求")
-        print(messageFormat)
-        
-        self.sendFolderList(sock: sock, folderPath: messageFormat.content, messageKey: messageFormat.messageKey)
-    }
-    
     override func receiveRequestToDownloadFile(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         print("Server 收到下载文件请求")
         print(messageFormat)
@@ -85,12 +78,21 @@ public class PPServerSocketManager: PPSocketBaseManager {
         
         switch type {
         case .common:
-            print("Server 收到普通直连数据: \(directionMsg.content ?? "")")
+            do {
+                print("Server 收到普通直连数据: \(directionMsg.content ?? "")")
+            }
         case .deviceName:
-            print("Server 收到设备名称直连数据: \(directionMsg.content ?? "")")
-            sock.name = directionMsg.content
-            self.didReceivedClientSocketDeviceName?(directionMsg.content, sock)
-            return
+            do {
+                print("Server 收到设备名称直连数据: \(directionMsg.content ?? "")")
+                sock.name = directionMsg.content
+                self.didReceivedClientSocketDeviceName?(directionMsg.content, sock)
+            }
+        case .requestFileList:
+            do {
+                print("Server 收到文件列表请求, 文件夹路径: \(directionMsg.content ?? "")")
+                
+                self.sendFolderList(sock: sock, folderPath: directionMsg.content, messageKey: messageFormat.messageKey)
+            }
         default: break
         }
         
@@ -125,7 +127,7 @@ extension PPServerSocketManager {
     /// 发送文件夹下的文件列表 folderPath: 空表示根目录
     func sendFolderList(sock: GCDAsyncSocket, folderPath: String?, messageKey: String?) {
         
-        var messageFormat = PPSocketMessageFormat.format(action: .responseFileList, content: nil, messageKey: messageKey)
+        var messageFormat = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(type: .responseFileList), messageKey: messageKey)
         
         let filePath = (rootPath as NSString).appendingPathComponent(folderPath ?? "")
         var models: [PPFileModel] = []

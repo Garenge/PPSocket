@@ -10,11 +10,6 @@ import Foundation
 /// 长度小于18的字符串, 在前面补0, 补齐18
 enum PPSocketActions: String {
     
-    /// 请求文件列表
-    case requestFileList
-    /// 响应文件列表
-    case responseFileList
-    
     /// 请求下载文件
     case requestToDownloadFile
     /// 响应下载文件
@@ -44,9 +39,20 @@ enum PPSocketActions: String {
 struct PPSocketDirectionMsg: PPSocketConvertable {
     
     enum MsgType: String {
+        /// 其他类型的消息
         case common
+        
+        /// 发送设备名称
         case deviceName
+        
+        /// 移除client, 发指令让client自己离开
         case removeClient
+        
+        /// 请求文件列表
+        case requestFileList
+        
+        /// 响应文件列表
+        case responseFileList
     }
     
     var timestamp: TimeInterval = Date().timeIntervalSince1970

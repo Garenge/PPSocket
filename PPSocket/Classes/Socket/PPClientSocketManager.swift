@@ -39,11 +39,6 @@ public class PPClientSocketManager: PPSocketBaseManager {
     var receiveBuffer = Data()
     
     /// 这个方法其实不会相应, 因为一对一的任务, 基本已经在block中回调了, 如果实现了block, 就不会走这个自定义方法
-    override func receiveResponseFileList(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
-        print("Client 收到文件列表响应")
-        print(messageFormat)
-    }
-    /// 这个方法其实不会相应, 因为一对一的任务, 基本已经在block中回调了, 如果实现了block, 就不会走这个自定义方法
     override func receiveResponseToCancelTask(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         print("Client 收到取消任务响应")
         print(messageFormat)
@@ -66,11 +61,21 @@ public class PPClientSocketManager: PPSocketBaseManager {
         
         switch type {
         case .common:
-            print("Server 收到普通直连数据: \(directionMsg.content ?? "")")
+            do {
+                print("Server 收到普通直连数据: \(directionMsg.content ?? "")")
+            }
         case .removeClient:
-            print("收到Server端主动移除client端, 准备断开连接")
-            self.doClientDidRemovedByServerClosure?(self, self.socket)
-            self.socket.disconnect()
+            do {
+                print("收到Server端主动移除client端, 准备断开连接")
+                self.doClientDidRemovedByServerClosure?(self, self.socket)
+                self.socket.disconnect()
+            }
+        case .responseFileList:
+            // 所有有回复的, 都会在对应发送的block里面回调, 不会走这里
+            do {
+                print("Client 收到文件列表响应")
+                print(messageFormat)
+            }
         default: break
         }
         
@@ -108,10 +113,10 @@ extension PPClientSocketManager {
     
     /// 获取文件列表
     public func sendQueryFileList(_ path: String? = nil, finished: ((_ fileList: [PPFileModel]?) -> Void)?) {
-        let format = PPSocketMessageFormat.format(action: .requestFileList, content: path)
+        let format = PPSocketMessageFormat.format(action: .directionData, content: PPSocketDirectionMsg(type: .requestFileList, content: path))
         self.sendDirectionData(socket: self.socket, data: format.pp_convertToJsonData(), receiveBlock: { messageTask in
             print("Client 发送文件列表请求, 收到回复, \(messageTask?.description ?? "")");
-            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.taskId), messageFormat.action == PPSocketActions.responseFileList.getActionString() else {
+            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.taskId) else {
                 finished?(nil)
                 return
             }

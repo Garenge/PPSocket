@@ -379,16 +379,6 @@ public class PPSocketBaseManager: NSObject {
         return tmpPath
     }
     
-    /// 收到文件列表请求
-    func receiveRequestFileList(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
-        
-    }
-    
-    /// 收到文件列表回复
-    func receiveResponseFileList(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
-        
-    }
-    
     /// 收到下载文件请求
     func receiveRequestToDownloadFile(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         
@@ -530,12 +520,6 @@ public class PPSocketBaseManager: NSObject {
                 // 这里可以封装给子类实现, 由子类去具体解析某些事件 ============================
                 if let messageFormat = PPSocketMessageFormat.format(from: messageBody.directionData!, messageKey: messageKey) {
                     switch messageFormat.action {
-                    case PPSocketActions.requestFileList.getActionString():
-                        self.receiveRequestFileList(messageFormat, sock: sock)
-                        break
-                    case PPSocketActions.responseFileList.getActionString():
-                        self.receiveResponseFileList(messageFormat, sock: sock)
-                        break
                     case PPSocketActions.requestToDownloadFile.getActionString():
                         self.receiveRequestToDownloadFile(messageFormat, sock: sock)
                         break
