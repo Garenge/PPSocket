@@ -17,9 +17,9 @@ public class PPSocketReceiveMessageTask: NSObject {
         print("======== ReceiveMessageTask \(self) deinit ========")
     }
     /// 每个任务有独一无二的key
-    var messageKey: String? {
+    var taskId: String? {
         didSet {
-            guard let messageKey = messageKey else {
+            guard let messageKey = taskId else {
                 return
             }
             DispatchQueue.main.async {

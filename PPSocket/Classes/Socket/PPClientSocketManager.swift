@@ -93,7 +93,7 @@ extension PPClientSocketManager {
         self.sendDirectionData(socket: self.socket, data: format.pp_convertToJsonData(), messageKey: format.messageKey, receiveBlock: { messageTask in
             // 数据直传收到回复
             print("Client 发送直连数据请求, 收到回复, \(messageTask?.description ?? "")");
-            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.messageKey) else {
+            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.taskId) else {
                 completeHandler?(nil, NSError(domain: "com.garenge.socket", code: -1, userInfo: ["message": "数据解析失败"]))
                 return
             }
@@ -111,7 +111,7 @@ extension PPClientSocketManager {
         let format = PPSocketMessageFormat.format(action: .requestFileList, content: path)
         self.sendDirectionData(socket: self.socket, data: format.pp_convertToJsonData(), receiveBlock: { messageTask in
             print("Client 发送文件列表请求, 收到回复, \(messageTask?.description ?? "")");
-            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.messageKey), messageFormat.action == PPSocketActions.responseFileList.getActionString() else {
+            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.taskId), messageFormat.action == PPSocketActions.responseFileList.getActionString() else {
                 finished?(nil)
                 return
             }
@@ -160,7 +160,7 @@ extension PPClientSocketManager {
         self.sendDirectionData(socket: self.socket, data: format.pp_convertToJsonData(), messageKey: format.messageKey, receiveBlock: { messageTask in
             // 数据直传收到回复
             print("Client 发送直连数据请求, 收到回复, \(messageTask?.description ?? "")");
-            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.messageKey) else {
+            guard let messageTask = messageTask, let messageFormat = PPSocketMessageFormat.format(from: messageTask.directionData!, messageKey: messageTask.taskId) else {
                 completeHandler?(nil, NSError(domain: "com.garenge.socket", code: -1, userInfo: ["message": "数据解析失败"]))
                 return
             }

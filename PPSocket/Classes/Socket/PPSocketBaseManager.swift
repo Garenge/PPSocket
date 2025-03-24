@@ -191,7 +191,7 @@ public class PPSocketBaseManager: NSObject {
             self?.currentSendMessageTask?.sendMessageIndex = operation.identifier
             if progressBlock != nil || receiveBlock != nil, let messageKey = self?.currentSendMessageTask?.sendMessageIndex, messageKey.count > 0 {
                 let messageBody = PPSocketReceiveMessageTask()
-                messageBody.messageKey = messageKey
+                messageBody.taskId = messageKey
                 messageBody.didReceiveDataProgressBlock = progressBlock
                 messageBody.didReceiveDataCompleteBlock = receiveBlock
                 self?.receivedMessageDic[messageKey] = messageBody
@@ -438,7 +438,7 @@ public class PPSocketBaseManager: NSObject {
             var messageBody = self.receivedMessageDic[messageKey]
             if nil == messageBody {
                 messageBody = PPSocketReceiveMessageTask()
-                messageBody?.messageKey = messageKey
+                messageBody?.taskId = messageKey
                 self.receivedMessageDic[messageKey] = messageBody
             }
             messageBody?.totalLength = totalLength
@@ -463,7 +463,7 @@ public class PPSocketBaseManager: NSObject {
     /// 处理收到的文件数据
     func socketDoReceiveFile(_ messageBody: PPSocketReceiveMessageTask, sock: GCDAsyncSocket, data: Data, parseIndex: Int) {
         autoreleasepool {
-            guard let messageKey = messageBody.messageKey else {
+            guard let messageKey = messageBody.taskId else {
                 return
             }
             if nil == messageBody.fileHandle {
@@ -506,7 +506,7 @@ public class PPSocketBaseManager: NSObject {
     /// 处理收到的data数据
     final func socketDoReceiveData(_ messageBody: PPSocketReceiveMessageTask, sock: GCDAsyncSocket, data: Data, parseIndex: Int) {
         autoreleasepool {
-            guard let messageKey = messageBody.messageKey else {
+            guard let messageKey = messageBody.taskId else {
                 return
             }
             if nil == messageBody.directionData {
