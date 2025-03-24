@@ -56,7 +56,7 @@ public class PPSocketReceiveMessageTask: NSObject {
     var messageType: PPSocketTransMessageType = .directionData
     
     /// 文件才有, 文件路径
-    var filePath: String?
+    public var filePath: String?
     /// 文件才有, 文件句柄
     var fileHandle: FileHandle?
     
