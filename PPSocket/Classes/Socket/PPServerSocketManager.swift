@@ -61,7 +61,7 @@ public class PPServerSocketManager: PPSocketBaseManager {
         self.cancelSendingTask(socket: sock, content: messageFormat.content, messageKey: messageFormat.messageKey, receiveBlock: nil)
     }
     
-    public var didReceiveDirectionDataBlock: ((_ message: String?, _ messageKey: String) -> Void)?
+    public var didReceiveDirectionDataBlock: ((_ message: String?, _ messageKey: String, _ clientSocket: GCDAsyncSocket) -> Void)?
     public var didReceivedClientSocketDeviceName: ((_ deviceName: String?, _ clientSocket: GCDAsyncSocket) -> Void)?
     override func receiveDirectionData(_ messageFormat: PPSocketMessageFormat, sock: GCDAsyncSocket) {
         
@@ -96,7 +96,7 @@ public class PPServerSocketManager: PPSocketBaseManager {
         default: break
         }
         
-        self.didReceiveDirectionDataBlock?(directionMsg.content, messageFormat.messageKey)
+        self.didReceiveDirectionDataBlock?(content, messageFormat.messageKey, sock)
     }
     
 }

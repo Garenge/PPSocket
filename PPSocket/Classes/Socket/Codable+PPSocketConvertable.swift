@@ -35,7 +35,10 @@ extension PPSocketConvertable {
     func pp_convertToJsonData() -> Data? {
         do {
             let encoder = JSONEncoder()
-            return try encoder.encode(self)
+            let var_data = try encoder.encode(self)
+            let var_dict = try JSONSerialization.jsonObject(with: var_data, options: .mutableContainers) as Any
+            let result_data = try JSONSerialization.data(withJSONObject: var_dict, options: [.withoutEscapingSlashes, .sortedKeys])
+            return result_data
         } catch {
             print(error)
         }

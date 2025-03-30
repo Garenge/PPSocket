@@ -102,7 +102,6 @@ extension PPClientSocketManager {
                 completeHandler?(nil, NSError(domain: "com.garenge.socket", code: -1, userInfo: ["message": "数据解析失败"]))
                 return
             }
-            let jsonDecoder = JSONDecoder()
             guard let content = messageFormat.content else {
                 completeHandler?(nil, NSError(domain: "com.garenge.socket", code: -1, userInfo: ["message": "no content"]))
                 return
